@@ -1,0 +1,78 @@
+#!/bin/bash
+
+show_help() {
+    echo "NAME:"
+    echo "  $0 - Recompresses archives to 7z"
+    echo ""
+    echo "USAGE:"
+    echo "  $0 FILE"
+    echo ""
+    echo "GLOBAL OPTIONS:"
+    echo "  -n    "
+    echo "  -h    Get (this) help"
+    echo ""
+    echo "ARGUMENTS:"
+    echo "  NAME_OF_ENV_SET    The name of the environment to list (will list all if not specified)"
+    echo ""
+    exit 0
+}
+
+function finish {
+  rm -rf "$TEMPDIR"
+}
+
+NO_DIRS=0
+DRY_RUN=0
+
+while getopts "hdn" opt; do
+    case "$opt" in
+        h)
+            show_help
+            exit 0
+            ;;
+        d)
+            DRY_RUN=1
+            ;;
+        n)
+            NO_DIRS=1
+            ;;
+        *)
+            echo "INVALID FLAG"
+            exit 1
+    esac
+done
+
+shift $(( OPTIND - 1 ))
+
+
+set -eou
+IFS=$'\n\t'
+
+FILENAME="$(realpath "$1")"
+EXT=$(echo "$FILENAME" | sed 's/.*\.//')
+DESTINATION="$(echo "$FILENAME" | sed 's/\.'"$EXT"'$/.7z/')"
+if [ -f "$DESTINATION" ]; then
+    echo "File '$DESTINATION' already exists"
+    exit 1
+fi
+TEMPDIR="$(mktemp -u)"
+mkdir "$TEMPDIR"
+trap finish EXIT
+cd "$TEMPDIR"
+if [ "$EXT" == "rar" ]; then
+    rar x "$FILENAME"
+fi
+if [ "$EXT" == "zip" ]; then
+    unzip "$FILENAME"
+fi
+DIR_COUNT=$(find . ! -path . -type d | wc -l)
+if [ "$NO_DIRS" -gt 0 ]; then
+if [ "$DIR_COUNT" -gt 0 ]; then
+    echo "File '$FILENAME' has sub directories and -n flag passed"
+    exit 1
+fi
+fi
+if [ "$DRY_RUN" -gt 0 ]; then
+    exit 0
+fi
+7z a -r "$DESTINATION" . && rm "$FILENAME"
