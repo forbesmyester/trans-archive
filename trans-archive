@@ -8,7 +8,8 @@ show_help() {
     echo "  $0 FORMAT FILE"
     echo ""
     echo "GLOBAL OPTIONS:"
-    echo "  -n    "
+    echo "  -n    No Dirs"
+    echo "  -d    Dry run"
     echo "  -h    Get (this) help"
     echo ""
     echo "ARGUMENTS:"
@@ -85,9 +86,9 @@ fi
 if [ "$DRY_RUN" -gt 0 ]; then
     exit 0
 fi
-if [ "$EXT" == "zip" ]; then
-    7z a -r "$DESTINATION" . && rm "$FILENAME"
-fi
-if [ "$EXT" == "7z" ]; then
+if [ "$FORMAT" == "zip" ]; then
     zip -9 -r "$DESTINATION" . && rm "$FILENAME"
+fi
+if [ "$FORMAT" == "7z" ]; then
+    7z a -r "$DESTINATION" . && rm "$FILENAME"
 fi
